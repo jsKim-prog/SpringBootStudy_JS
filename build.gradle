@@ -1,3 +1,11 @@
+buildscript {
+    ext {
+        queryDslVersion = "5.0.0"
+    }
+} // 쿼리dsl 버전 관리 (http://www.querydsl.com)
+// 쿼리dsl Qdomain 생성 -> Gradle -> Tasks -> other -> complieJava
+// 쿼리dsl Qdomain 생성 오류시 Gradle -> Tasks -> build -> Clean -> 생성
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.10'
@@ -23,8 +31,11 @@ repositories {
     mavenCentral()
 }
 
-dependencies { //과거의 spring Maven Repository(pom.xml)
+dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'     //프론트 담당
+    // https://mvnrepository.com/artifact/org.thymeleaf.extras/thymeleaf-extras-java8time --날짜시간 포맷팅
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'           //스프링 웹
     //implementation 'org.springframework.boot:spring-boot-starter-web-services'  //스프링 웹 서비스-> 안해도 됨
     compileOnly 'org.projectlombok:lombok'                                      //객체담당
@@ -43,8 +54,56 @@ dependencies { //과거의 spring Maven Repository(pom.xml)
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'      //test용 코드
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'                //메서드별 테스트
+
+    //쿼리dsl 관련 설정 추가
+    implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
+
+    annotationProcessor(//쿼리dsl 관련 설정 추가
+
+            // 톰켓 9 용 "javax.persistence:javax.persistence-api",
+            // 톰켓 9 용 "javax.annotation:javax.annotation-api",
+            // 톰켓 9 용 "com.querydsl:querydsl-apt:${queryDslVersion}:jpa"
+
+            // 톰켓 10 용
+            "jakarta.persistence:jakarta.persistence-api",
+            "jakarta.annotation:jakarta.annotation-api",
+            "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
+    )
+
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+//쿼리dsl 관련 설정 추가
+//def querydslDir = "$buildDir/generated/querydsl"
+
+// 톰켓 9 용 querydsl {
+//    jpa = true
+//    querydslSourcesDir = querydslDir
+//}
+
+sourceSets {
+    // 톰켓 9용 main.java.srcDir querydslDir
+
+    // 톰켓 10용
+    main {
+        java {
+            srcDirs = ["$projectDir/src/main/java", "$projectDir/build/generated"]
+        }
+    }
+
+}
+
+
+compileJava.dependsOn('clean') // 톰켓 10용
+// 톰켓 9용
+//configurations {
+//    querydsl.extendsFrom compileClasspath
+//}
+
+// 톰켓 9용
+//compileQuerydsl {
+//    options.annotationProcessorPath = configurations.querydsl
+//}
